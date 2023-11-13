@@ -11,6 +11,7 @@ public class Cell implements Comparable<Cell> {
     double f,g,h;
     Cell parent;    // parent record: come from
     LngLat cellLngLat;    // cells LngLat position so we can use LngLatHandler
+    double fromAngle;
 
     public Cell(double lng, double lat) {
         this.lng = lng;
@@ -20,6 +21,7 @@ public class Cell implements Comparable<Cell> {
         f = 0;
         g = 0;
         h = 0;
+        fromAngle = 0;
     }
 
     @Override
@@ -45,6 +47,31 @@ public class Cell implements Comparable<Cell> {
     public int compareTo(Cell other) {
         // Implement your comparison logic based on 'f' values
         return Double.compare(this.f, other.f);
+    }
+
+    // getter for lng
+    public double lng() {
+        return this.lng;
+    }
+
+    // getter for lat
+    public double lat() {
+        return this.lat;
+    }
+
+    // getter for angle
+    public double angle() {
+        return this.fromAngle;
+    }
+
+    // getter for angle
+    public LngLat currentLngLat() {
+        return this.cellLngLat;
+    }
+
+    // getter for angle
+    public LngLat parentLngLat() {
+        return this.parent.cellLngLat;
     }
 
 }

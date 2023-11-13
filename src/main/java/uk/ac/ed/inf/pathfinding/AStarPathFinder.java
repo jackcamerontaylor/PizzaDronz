@@ -1,7 +1,5 @@
 package uk.ac.ed.inf.pathfinding;
 
-import uk.ac.ed.inf.communication.RestClient_J;
-import uk.ac.ed.inf.ilp.constant.CentralRegionVertexOrder;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
@@ -9,11 +7,6 @@ import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import java.util.*;
 
 public class AStarPathFinder {
-
-//    private final RestClient_J restClient = new RestClient_J();
-//    NamedRegion centralArea = restClient.getCentralAreaFromServer();
-//    NamedRegion[] noFlyZones = restClient.getNoFlyZonesFromServer();
-
     static LngLatHandler lngLatHandler = new LngLatHandler();
 
     // Possible movement directions
@@ -25,28 +18,21 @@ public class AStarPathFinder {
     // global defined variables for the search
     static PriorityQueue<Cell> openSet = new PriorityQueue<>();   // frontier
     static HashSet<Cell> closedSet = new HashSet<>();
-    static List<LngLat> path = new ArrayList<>();
+    static List<Cell> path = new ArrayList<>();
 
     // A* search algorithm
-    public static List<LngLat> findShortestPath(Cell start, Cell goal, NamedRegion[] noFlyZones, NamedRegion centralArea) {
-
-//        for (Cell cell : openSet) {
-//            cell.parent = null;
-//            cell.f = 0;
-//            cell.g = 0;
-//            cell.h = 0;
-//        }
-//
-//        for (Cell cell : closedSet) {
-//            cell.parent = null;
-//            cell.f = 0;
-//            cell.g = 0;
-//            cell.h = 0;
-//        }
+    public static List<Cell> findShortestPath(Cell start, Cell goal, NamedRegion[] noFlyZones, NamedRegion centralArea) {
 
         // Reset the data structures for each new search
         openSet = new PriorityQueue<>();
         closedSet = new HashSet<>();
+
+        // flag to check if drone starts outside the central area
+        boolean startOutsideCentralArea = false;
+
+        if (!lngLatHandler.isInRegion(start.cellLngLat, centralArea)) {
+            startOutsideCentralArea = true;
+        }
 
         // add start to the queue first
         openSet.add(start);
@@ -66,7 +52,7 @@ public class AStarPathFinder {
                 // Reconstruct the path: trace by find the parent cell
                 path = new ArrayList<>();
                 while (current != null) {
-                    path.add(current.cellLngLat);
+                    path.add(current);
                     current = current.parent;
                 }
                 Collections.reverse(path);
@@ -74,27 +60,22 @@ public class AStarPathFinder {
                 return path;
             }
 
-            // flag to check if point is in the central area
-//            boolean isInCentralArea = lngLatHandler.isInRegion(current.cellLngLat, centralArea);
+            boolean nowInCentral = false;
+            if (startOutsideCentralArea && lngLatHandler.isInRegion(current.cellLngLat, centralArea)) {
+                nowInCentral = true;
+            }
 
             // search neighbors
             for (double angle : ANGLES) {
-
-                // neighbour cell location
-                //double newLng = new LngLatHandler().nextPosition(current.cellLngLat, angle).lng();
-                //double newLat = new LngLatHandler().nextPosition(current.cellLngLat, angle).lat();
-
-                // as a LngLat object
+                // neighbour cell location as a LngLat object
                 LngLat newPos = lngLatHandler.nextPosition(current.cellLngLat, angle);
-
-                // If the previous point was in the central area and this one is not, skip past it.
-//                if (isInCentralArea && !lngLatHandler.isInRegion(newPos, centralArea)) {
-//                    continue;
-//                }
 
                 // check if point is in noFlyZone and we haven't already looked at the point
                 if (!isPointInNoFlyZone(newPos, noFlyZones) && !closedSet.contains(new Cell(newPos.lng(), newPos.lat()))) {
 
+                    if (nowInCentral && !lngLatHandler.isInRegion(newPos, centralArea)){
+                        continue;
+                    }
                     // new movement is always 1 cost even it is diagonal
                     double tentativeG = current.g + SystemConstants.DRONE_MOVE_DISTANCE;
 
@@ -109,6 +90,7 @@ public class AStarPathFinder {
                             existing_neighbor.g = tentativeG;
                             existing_neighbor.h = heuristic(existing_neighbor, goal);
                             existing_neighbor.f = existing_neighbor.g + existing_neighbor.h;
+                            existing_neighbor.fromAngle = angle;
                         }
                     }
                     else{
@@ -118,6 +100,7 @@ public class AStarPathFinder {
                         neighbor.g = tentativeG;
                         neighbor.h = heuristic(neighbor, goal);
                         neighbor.f = neighbor.g + neighbor.h;
+                        neighbor.fromAngle = angle;
 
                         openSet.add(neighbor);
                     }
