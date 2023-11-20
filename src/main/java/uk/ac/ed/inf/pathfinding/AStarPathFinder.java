@@ -4,6 +4,7 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
 
+
 import java.util.*;
 
 public class AStarPathFinder {
@@ -27,7 +28,7 @@ public class AStarPathFinder {
         openSet = new PriorityQueue<>();
         closedSet = new HashSet<>();
 
-        // flag to check if drone starts outside the central area
+//        flag to check if drone starts outside the central area
         boolean startOutsideCentralArea = false;
 
         if (!lngLatHandler.isInRegion(start.cellLngLat, centralArea)) {

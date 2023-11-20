@@ -28,7 +28,7 @@ public class DeliveryHandler {
     public List<FlightPathJsonFormat> dailyDroneMoves = new ArrayList<>();
 
     // Map to cache visited paths
-    private Map<PathCacheKey, List<Cell>> visitedPathsCache = new HashMap<>();
+//    private Map<PathCacheKey, List<Cell>> visitedPathsCache = new HashMap<>();
 
 
     public DeliveryHandler(String baseURL, String date) {
@@ -44,6 +44,8 @@ public class DeliveryHandler {
     public void deliverOrders() {
         OrderValidator orderValidator = new OrderValidator();
 
+        PathCacheManager pathCacheManager = new PathCacheManager();
+
         for (Order order : this.orders) {
             // Validate order first
             orderValidator.validateOrder(order, this.restaurants);
@@ -57,22 +59,28 @@ public class DeliveryHandler {
                 List<Cell> path;
                 List<Cell> pathBack;
 
+//                List <Cell> path = AStarPathFinder.findShortestPath(this.appletonTower, orderRestaurantCell, this.noFlyZones, this.centralArea);
+//                addVisitedPathToCache(this.appletonTower, orderRestaurantCell, path);
+
                 // Check if the path is already cached
-                List<Cell> cachedPath = getVisitedPathFromCache(this.appletonTower, orderRestaurantCell);
+                List<Cell> cachedPath = pathCacheManager.getVisitedPathFromCache(this.appletonTower, orderRestaurantCell, false);
                 if (cachedPath == null) {
                     path = AStarPathFinder.findShortestPath(this.appletonTower, orderRestaurantCell, this.noFlyZones, this.centralArea);
-                    addVisitedPathToCache(this.appletonTower, orderRestaurantCell, path);
+                    pathCacheManager.addVisitedPathToCache(this.appletonTower, orderRestaurantCell, path, false);
                 } else {
                     path = cachedPath;
                 }
 
+//                List <Cell> pathBack = AStarPathFinder.findShortestPath(orderRestaurantCell, this.appletonTower, this.noFlyZones, this.centralArea);
+//                addVisitedPathToCache(orderRestaurantCell, this.appletonTower, path);
+
                 // Check if the path is already cached
-                List<Cell> cachedBackPath = getVisitedPathFromCache(orderRestaurantCell, this.appletonTower);
+                List<Cell> cachedBackPath = pathCacheManager.getVisitedPathFromCache(orderRestaurantCell, this.appletonTower, true);
                 if (cachedBackPath == null) {
                     pathBack = AStarPathFinder.findShortestPath(orderRestaurantCell, this.appletonTower, this.noFlyZones, this.centralArea);
-                    addVisitedPathToCache(orderRestaurantCell, this.appletonTower, path);
+                    pathCacheManager.addVisitedPathToCache(orderRestaurantCell, this.appletonTower, pathBack, true);
                 } else {
-                    pathBack = cachedPath;
+                    pathBack = cachedBackPath;
                 }
 
                 assert path != null;
@@ -102,24 +110,29 @@ public class DeliveryHandler {
         return (-(((cell.angle() - 90) + 360) % 360) + 360);
     }
 
-    private static class PathCacheKey {
-        private Cell start;
-        private Cell end;
+//    @Override
+//    public int hashCode() {
+//        return start.hashCode() ^ end.hashcode();
+//    }
+//    private static class PathCacheKey {
+//        private Cell start;
+//        private Cell end;
+//
+//        public PathCacheKey(Cell start, Cell end) {
+//            this.start = start;
+//            this.end = end;
+//        }
+//
+//    }
 
-        public PathCacheKey(Cell start, Cell end) {
-            this.start = start;
-            this.end = end;
-        }
-    }
-
-    private List<Cell> getVisitedPathFromCache(Cell start, Cell end) {
-        PathCacheKey key = new PathCacheKey(start, end);
-        return visitedPathsCache.get(key);
-    }
-
-    private void addVisitedPathToCache(Cell start, Cell end, List<Cell> path) {
-        PathCacheKey key = new PathCacheKey(start, end);
-        visitedPathsCache.put(key, path);
-    }
+//    private List<Cell> getVisitedPathFromCache(Cell start, Cell end) {
+//        PathCacheKey key = new PathCacheKey(start, end);
+//        return visitedPathsCache.get(key);
+//    }
+//
+//    private void addVisitedPathToCache(Cell start, Cell end, List<Cell> path) {
+//        PathCacheKey key = new PathCacheKey(start, end);
+//        visitedPathsCache.put(key, path);
+//    }
 
     }
