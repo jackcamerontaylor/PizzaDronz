@@ -8,20 +8,45 @@ import uk.ac.ed.inf.ilp.interfaces.LngLatHandling;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * The LngLatHandler class implements LngLatHandling and provides methods for distance calculation,
+ * checking proximity, checking if a point is inside a region, and determining the next position based on a given angle.
+ */
 public class LngLatHandler implements LngLatHandling {
+
+    /**
+     * Calculates the distance between two LngLat positions using the distance formula.
+     *
+     * @param startPosition the starting LngLat position.
+     * @param endPosition   the ending LngLat position.
+     * @return the distance between the two positions.
+     */
     @Override
-    // Using the distance formula to compute the distance between two points.
     public double distanceTo(LngLat startPosition, LngLat endPosition) {
         double term1 = Math.pow((startPosition.lng() - endPosition.lng()), 2);
         double term2 = Math.pow((startPosition.lat() - endPosition.lat()), 2);
         return Math.sqrt(term1 + term2);
     }
+
+    /**
+     * Checks if a LngLat position is close to another LngLat position based on a system constant.
+     *
+     * @param startPosition the starting LngLat position.
+     * @param otherPosition  the other LngLat position to check proximity.
+     * @return true if the positions are close, false otherwise.
+     */
     @Override
-    // Defines when the drone is close using system constant.
     public boolean isCloseTo(LngLat startPosition, LngLat otherPosition) {
         return distanceTo(startPosition, otherPosition) < SystemConstants.DRONE_IS_CLOSE_DISTANCE;
     }
 
+    /**
+     * Checks if a LngLat position is inside a named region using ray casting.
+     *
+     * @param position the LngLat position to check.
+     * @param region   the named region to check against.
+     * @return true if the position is inside the region, false otherwise.
+     */
     @Override
     public boolean isInRegion(LngLat position, NamedRegion region) {
         List<LngLat> vertices = Arrays.asList(region.vertices());
@@ -62,6 +87,13 @@ public class LngLatHandler implements LngLatHandling {
         return intersectCount % 2 == 1;
     }
 
+    /**
+     * Determines the next LngLat position based on a given angle.
+     *
+     * @param startPosition the starting LngLat position.
+     * @param angle          the angle of movement.
+     * @return the next LngLat position.
+     */
     @Override
     public LngLat nextPosition(LngLat startPosition, double angle) {
         // Will be stuck at the startPosition if it doesn't follow a legal angle.

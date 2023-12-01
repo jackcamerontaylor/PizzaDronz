@@ -7,6 +7,11 @@ import uk.ac.ed.inf.ilp.constant.SystemConstants;
 
 import java.util.*;
 
+/**
+ * The AStarPathFinder class provides an implementation of the A* search algorithm to find the shortest path
+ * between two cells on a map. The class utilizes a priority queue for efficient frontier management.
+ * LngLatHandler is used for handling longitude and latitude coordinates.
+ */
 public class AStarPathFinder {
     static LngLatHandler lngLatHandler = new LngLatHandler();
 
@@ -21,14 +26,22 @@ public class AStarPathFinder {
     static HashSet<Cell> closedSet = new HashSet<>();
     static List<Cell> path = new ArrayList<>();
 
-    // A* search algorithm
+    /**
+     * Finds the shortest path between the start and goal cells using the A* search algorithm.
+     *
+     * @param start       the starting cell.
+     * @param goal        the goal cell.
+     * @param noFlyZones  an array of no-fly zones.
+     * @param centralArea the central area.
+     * @return the list of cells representing the shortest path, or null if no path is found.
+     */
     public static List<Cell> findShortestPath(Cell start, Cell goal, NamedRegion[] noFlyZones, NamedRegion centralArea) {
 
         // Reset the data structures for each new search
         openSet = new PriorityQueue<>();
         closedSet = new HashSet<>();
 
-//        flag to check if drone starts outside the central area
+        //flag to check if drone starts outside the central area
         boolean startOutsideCentralArea = false;
 
         if (!lngLatHandler.isInRegion(start.cellLngLat, centralArea)) {
@@ -113,8 +126,13 @@ public class AStarPathFinder {
         return null;
     }
 
-    // Helper function to find and return the neighbor cell
-    //  Java priority queue cannot return a specific element
+    /**
+     * Helper function to find and return the neighbor cell. Java priority queue cannot return a specific element.
+     *
+     * @param lat the latitude of the neighbor cell.
+     * @param lng the longitude of the neighbor cell.
+     * @return the neighbor cell if found in the frontier, otherwise null.
+     */
     public static Cell findNeighbor(double lat, double lng){
         if(openSet.isEmpty()){
             return null;
@@ -133,21 +151,25 @@ public class AStarPathFinder {
         return find;
     }
 
-    // Helper function to check if a cell is part of the path
-//    public static boolean isInPath(int row, int col) {
-//        for (Cell cell : path) {
-//            if (cell.row == row && cell.col == col) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
+    /**
+     * Calculates the heuristic value (Manhattan distance) between two cells.
+     *
+     * @param a the first cell.
+     * @param b the second cell.
+     * @return the heuristic value.
+     */
     public static double heuristic(Cell a, Cell b) {
         // A simple heuristic: Manhattan distance
         return Math.abs(a.lng - b.lng) + Math.abs(a.lat - b.lat);
     }
 
+    /**
+     * Checks if a point is in a no-fly zone.
+     *
+     * @param point      the point to check.
+     * @param noFlyZones an array of no-fly zones.
+     * @return true if the point is in a no-fly zone, false otherwise.
+     */
     public static boolean isPointInNoFlyZone(LngLat point, NamedRegion[] noFlyZones) {
         for (NamedRegion noFlyZone : noFlyZones) {
             if (lngLatHandler.isInRegion(point, noFlyZone)) {
@@ -156,5 +178,4 @@ public class AStarPathFinder {
         }
         return false;
     }
-
 }

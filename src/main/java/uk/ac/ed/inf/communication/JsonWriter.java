@@ -8,12 +8,10 @@ import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.geojson.LineString;
 import org.geojson.LngLatAlt;
-import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.gsonUtils.LocalDateSerializer;
 import uk.ac.ed.inf.pathfinding.Cell;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -24,6 +22,8 @@ import java.util.List;
 
 
 public class JsonWriter {
+
+    // Helper function to make sure all orders are in Json Format.
     private static OrderJsonFormat[] convertToDTO(Order[] orders) {
         OrderJsonFormat[] orderDTOs = new OrderJsonFormat[orders.length];
         for (int i = 0; i < orders.length; i++) {
@@ -38,13 +38,19 @@ public class JsonWriter {
         return orderDTOs;
     }
     private static final ObjectMapper mapper = new ObjectMapper();
-
     private static final String OUTPUT_DIRECTORY = "resultfiles";
 
     static {
         // Configure the ObjectMapper to use the jackson-datatype-jsr310 module
         mapper.registerModule(new JavaTimeModule());
     }
+
+    /**
+     * Writes deliveries information to a JSON file for a specific order date.
+     *
+     * @param orders    An array of Order objects.
+     * @param orderDate The date for which deliveries information is recorded to file.
+     */
     public static void writeDeliveriesToFile(Order[] orders, String orderDate) {
         try {
             OrderJsonFormat[] orderJsonFormats = convertToDTO(orders);
@@ -62,13 +68,20 @@ public class JsonWriter {
             // Create directories if they don't exist
             Files.createDirectories(deliveriesJsonPath.getParent());
 
-            // Use StandardOpenOption.CREATE to create the file if it doesn't exist
+            // Use StandardOpenOption.CREATE to create the file if it doesn't exist and overwrites it if it does.
             Files.write(deliveriesJsonPath, json.getBytes(), StandardOpenOption.CREATE);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("An error occurred while performing I/O operations: " + e.getLocalizedMessage());
         }
     }
+
+    /**
+     * Records flight paths information to a JSON file for a specific order date.
+     *
+     * @param flightPath A list of FlightPathJsonFormat objects representing the flight paths.
+     * @param orderDate  The date for which flight paths information is recorded.
+     */
     public static void recordFlightPathsToJson(List<FlightPathJsonFormat> flightPath, String orderDate) {
         try {
             String flightPathJsonFileName = "flightpath-" + orderDate + ".json";
@@ -85,12 +98,19 @@ public class JsonWriter {
             // Create directories if they don't exist
             Files.createDirectories(flightPathJsonPath.getParent());
 
-            // Use StandardOpenOption.CREATE to create the file if it doesn't exist
+            // Use StandardOpenOption.CREATE to create the file if it doesn't exist and overwrites it if it does.
             Files.write(flightPathJsonPath, json.getBytes(), StandardOpenOption.CREATE);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("An error occurred while performing I/O operations: " + e.getLocalizedMessage());
         }
     }
+
+    /**
+     * Records flight paths information to a GeoJSON file for a specific order date.
+     *
+     * @param flightPath A list of Cell objects representing the flight paths.
+     * @param orderDate  The date for which flight paths information is recorded.
+     */
     public static void recordFlightPathsToGeoJson(List<Cell> flightPath, String orderDate) {
 
         // Create a LineString
@@ -115,10 +135,10 @@ public class JsonWriter {
             // Create directories if they don't exist
             Files.createDirectories(geoJsonPath.getParent());
 
-            // Use StandardOpenOption.CREATE to create the file if it doesn't exist
+            // Use StandardOpenOption.CREATE to create the file if it doesn't exist and overwrites it if it does.
             mapper.writeValue(geoJsonPath.toFile(), featureCollection);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("An error occurred while performing I/O operations: " + e.getLocalizedMessage());
         }
     }
 }

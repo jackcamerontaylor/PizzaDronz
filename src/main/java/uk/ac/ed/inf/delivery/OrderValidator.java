@@ -11,8 +11,17 @@ import java.time.LocalDate;
 import java.util.*;
 import java.time.DayOfWeek;
 
+/**
+ * The OrderValidator class provides methods to validate orders, it implements the OrderValidation interface.
+ */
 public class OrderValidator implements OrderValidation {
-    // Function to check what restaurant the order came from.
+    /**
+     * Finds the restaurant from which the order originated based on the first pizza in the order.
+     *
+     * @param order              the order to be validated.
+     * @param definedRestaurants an array of defined restaurants.
+     * @return the restaurant from which the order originated.
+     */
     public Restaurant findOrderRestaurant(Order order, Restaurant[] definedRestaurants) {
         // We are told pizzas are unique over restaurants.
         Pizza[] orderPizzas = order.getPizzasInOrder();
@@ -48,10 +57,9 @@ public class OrderValidator implements OrderValidation {
             // Catches parsing error quickly where the expiry date is not numbers.
             return false;
         }
-
         // Checking that the expiry date follows mm/yy and is valid today
         return expiryDate.matches("^(0[1-9]|1[0-2])/\\d{2}$") &&
-                LocalDate.now().isBefore(LocalDate.of(2000 + year, month, 1).plusMonths(1));
+                order.getOrderDate().isBefore(LocalDate.of(2000 + year, month, 1).plusMonths(1));
     }
     private boolean validateCvv (Order order) {
         String cvv = order.getCreditCardInformation().getCvv();
@@ -147,6 +155,14 @@ public class OrderValidator implements OrderValidation {
 
         return openDaysSet.contains(orderDay);
     }
+
+    /**
+     * Validates an order based on various criteria.
+     *
+     * @param orderToValidate    the order to be validated.
+     * @param definedRestaurants an array of defined restaurants.
+     * @return the validated order with updated validation code and order status.
+     */
     @Override
     public Order validateOrder(Order orderToValidate, Restaurant[] definedRestaurants) {
         // Will check every validation code and if all are valid then the order is valid.

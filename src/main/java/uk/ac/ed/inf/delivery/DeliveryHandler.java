@@ -10,12 +10,14 @@ import uk.ac.ed.inf.pathfinding.AStarPathFinder;
 import uk.ac.ed.inf.pathfinding.Cell;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * The DeliveryHandler class is responsible for managing the delivery process,
+ * including validating orders, finding delivery paths, making sure the flight paths are in
+ * the correct format, and updating order statuses.
+ */
 public class DeliveryHandler {
-
     private final Restaurant[] restaurants;
     public final Order[] orders;
     private final NamedRegion[] noFlyZones;
@@ -27,13 +29,20 @@ public class DeliveryHandler {
     public List<Cell> dailyFlightpath = new ArrayList<>();
     public List<FlightPathJsonFormat> dailyDroneMoves = new ArrayList<>();
 
-    // Map to cache visited paths
-//    private Map<PathCacheKey, List<Cell>> visitedPathsCache = new HashMap<>();
-
-
+    /**
+     * Constructs a DeliveryHandler object with the specified base URL and date.
+     *
+     * @param baseURL the base URL for communication with the server.
+     * @param date    the date for which the delivery handling is initialized.
+     */
     public DeliveryHandler(String baseURL, String date) {
         // BASE URL
         RestClient restClient = new RestClient(baseURL, date);
+
+        if (!restClient.isAlive()) {
+            System.err.println("Server not alive");
+            System.exit(1);
+        }
 
         this.restaurants = restClient.getRestaurantsFromServer();
         this.orders = restClient.getOrdersFromServer();
@@ -41,6 +50,9 @@ public class DeliveryHandler {
         this.centralArea = restClient.getCentralAreaFromServer();
     }
 
+    /**
+     * Delivers orders by validating, finding paths, and updating order statuses.
+     */
     public void deliverOrders() {
         OrderValidator orderValidator = new OrderValidator();
 
@@ -59,9 +71,6 @@ public class DeliveryHandler {
                 List<Cell> path;
                 List<Cell> pathBack;
 
-//                List <Cell> path = AStarPathFinder.findShortestPath(this.appletonTower, orderRestaurantCell, this.noFlyZones, this.centralArea);
-//                addVisitedPathToCache(this.appletonTower, orderRestaurantCell, path);
-
                 // Check if the path is already cached
                 List<Cell> cachedPath = pathCacheManager.getVisitedPathFromCache(this.appletonTower, orderRestaurantCell, false);
                 if (cachedPath == null) {
@@ -70,9 +79,6 @@ public class DeliveryHandler {
                 } else {
                     path = cachedPath;
                 }
-
-//                List <Cell> pathBack = AStarPathFinder.findShortestPath(orderRestaurantCell, this.appletonTower, this.noFlyZones, this.centralArea);
-//                addVisitedPathToCache(orderRestaurantCell, this.appletonTower, path);
 
                 // Check if the path is already cached
                 List<Cell> cachedBackPath = pathCacheManager.getVisitedPathFromCache(orderRestaurantCell, this.appletonTower, true);
@@ -83,56 +89,39 @@ public class DeliveryHandler {
                     pathBack = cachedBackPath;
                 }
 
-                assert path != null;
-                this.dailyFlightpath.addAll(path);
-                assert pathBack != null;
-                this.dailyFlightpath.addAll(pathBack);
+                // Checks to make sure the paths are not null
+                if (path != null) {
+                    this.dailyFlightpath.addAll(path);
+                } else {
+                    System.err.println("Warning: 'path' is null. No path was found.");
+                }
+                if (pathBack != null) {
+                    this.dailyFlightpath.addAll(pathBack);
+                } else {
+                    System.err.println("Warning: 'pathBack' is null. No path was found.");
+                }
 
+
+                // Loop through the moves of the path and add them to a list in the correct JSON format.
                 for (int i = 1; i < path.size(); i++) {
                     Cell cell = path.get(i);
-                    FlightPathJsonFormat x = new FlightPathJsonFormat(order.getOrderNo(), cell.parentLngLat(), calculateAngle(cell), cell.currentLngLat());
+                    FlightPathJsonFormat x = new FlightPathJsonFormat(order.getOrderNo(), cell.parentLngLat(), cell.angle(), cell.currentLngLat());
                     this.dailyDroneMoves.add(x);
                 }
+                // Hover movement added.
                 this.dailyDroneMoves.add(new FlightPathJsonFormat(order.getOrderNo(), orderRestaurantCell.currentLngLat(), 999, orderRestaurantCell.currentLngLat()));
-
+                // Adding path back in the correct JSON format.
                 for (int i = 1; i < pathBack.size(); i++) {
                     Cell cell = pathBack.get(i);
-                    FlightPathJsonFormat x = new FlightPathJsonFormat(order.getOrderNo(), cell.parentLngLat(), calculateAngle(cell), cell.currentLngLat());
+                    FlightPathJsonFormat x = new FlightPathJsonFormat(order.getOrderNo(), cell.parentLngLat(), cell.angle(), cell.currentLngLat());
                     this.dailyDroneMoves.add(x);
                 }
+                // Hover movement added.
                 this.dailyDroneMoves.add(new FlightPathJsonFormat(order.getOrderNo(),this.appletonTower.currentLngLat(),999, this.appletonTower.currentLngLat()));
 
+                // Update order status
                 order.setOrderStatus(OrderStatus.DELIVERED);
             }
         }
     }
-    private double calculateAngle(Cell cell) {
-        return (-(((cell.angle() - 90) + 360) % 360) + 360);
-    }
-
-//    @Override
-//    public int hashCode() {
-//        return start.hashCode() ^ end.hashcode();
-//    }
-//    private static class PathCacheKey {
-//        private Cell start;
-//        private Cell end;
-//
-//        public PathCacheKey(Cell start, Cell end) {
-//            this.start = start;
-//            this.end = end;
-//        }
-//
-//    }
-
-//    private List<Cell> getVisitedPathFromCache(Cell start, Cell end) {
-//        PathCacheKey key = new PathCacheKey(start, end);
-//        return visitedPathsCache.get(key);
-//    }
-//
-//    private void addVisitedPathToCache(Cell start, Cell end, List<Cell> path) {
-//        PathCacheKey key = new PathCacheKey(start, end);
-//        visitedPathsCache.put(key, path);
-//    }
-
-    }
+}
